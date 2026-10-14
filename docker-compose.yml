@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: passe-db
+    environment:
+      POSTGRES_DB: passe
+      POSTGRES_USER: passe
+      POSTGRES_PASSWORD: passe
+    ports:
+      - "5433:5432"
+    volumes:
+      - passe-data:/var/lib/postgresql/data
+
+volumes:
+  passe-data:

@@ -1,0 +1,11 @@
+# backend
+backend/target/
+backend/.env
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+# ide
+.idea/
+.vscode/
+*.iml

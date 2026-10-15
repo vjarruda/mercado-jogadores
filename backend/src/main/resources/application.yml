@@ -21,9 +21,9 @@ spring:
     property-naming-strategy: SNAKE_CASE
     time-zone: America/Sao_Paulo
     deserialization:
-      fail-on-unknown-properties: false   # V7: campos extras são ignorados
+      fail-on-unknown-properties: false
     mapper:
-      allow-coercion-of-scalars: false    # V2: "15" (texto) deve ser recusado
+      allow-coercion-of-scalars: false
 
 app:
   cors:

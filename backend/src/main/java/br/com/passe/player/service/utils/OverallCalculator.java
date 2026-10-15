@@ -1,4 +1,4 @@
-package br.com.passe.player.service;
+package br.com.passe.player.service.utils;
 
 import br.com.passe.player.enums.Position;
 import br.com.passe.player.model.Attributes;

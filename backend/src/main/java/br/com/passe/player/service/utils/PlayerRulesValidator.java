@@ -1,4 +1,4 @@
-package br.com.passe.player.service;
+package br.com.passe.player.service.utils;
 
 import br.com.passe.player.dto.PlayerCreateRequest;
 import br.com.passe.shared.exception.BadRequestException;

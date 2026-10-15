@@ -3,6 +3,7 @@ package br.com.passe.player.entity;
 import br.com.passe.club.entity.Club;
 import br.com.passe.player.enums.PlayerCondition;
 import br.com.passe.player.enums.Position;
+import br.com.passe.player.model.Attributes;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -81,5 +82,9 @@ public class Player {
 
     public boolean isFree() {
         return club == null;
+    }
+
+    public Attributes attributes() {
+        return new Attributes(pace, shooting, passing, dribbling, defending, physical);
     }
 }

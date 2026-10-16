@@ -19,6 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import br.com.passe.player.dto.PlayerListQuery;
+import br.com.passe.shared.dto.PageResponse;
+import java.util.Map;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/players")
@@ -40,6 +44,11 @@ public class PlayerController {
     @GetMapping("/{id}")
     public PlayerResponse findById(@PathVariable String id) {
         return playerService.findById(id);
+    }
+
+    @GetMapping
+    public PageResponse<PlayerResponse> list(@RequestParam Map<String, String> params) {
+        return playerService.list(PlayerListQuery.from(params));
     }
 
     @PutMapping("/{id}")

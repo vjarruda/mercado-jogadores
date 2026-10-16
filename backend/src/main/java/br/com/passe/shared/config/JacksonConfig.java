@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.LocalDateTime;
+
 @Configuration
 public class JacksonConfig {
 
@@ -12,6 +14,7 @@ public class JacksonConfig {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Integer.class, new StrictIntegerDeserializer());
         module.addDeserializer(int.class, new StrictIntegerDeserializer());
+        module.addSerializer(LocalDateTime.class, new BrasiliaDateTimeSerializer());
         return module;
     }
 }

@@ -4,9 +4,13 @@
 - **Unicidade do nome do clube:** Índice único em `lower(nome)`. Isso ignora diferenças entre letras maiúsculas e minúsculas e mantém os acentos, conforme a RN10: `"Águias FC"` e `"Aguias FC"` são considerados nomes diferentes.
 - **Índice parcial de contrato ativo:** Garante no banco de dados que um jogador não tenha dois contratos com status `ATIVO`.
 - **`ck_jogadores_valor`:** O piso de `1,00` para o valor base, definido pela RN06, fica protegido no banco de dados.
-- O valor do elenco e o patrimônio serão calculados a cada consulta, nunca gravados no banco de dados.
-- O endpoint `GET /clubs` fará uma consulta de jogadores por clube, com um limite máximo de 20 clubes.
-- A unicidade do nome será garantida por uma validação no service e por um índice `lower(nome)` no banco de dados.
+- **Listagem de jogadores em memória:** o valor de mercado é calculado a cada consulta e não é gravado, então filtros por valor, ordenação por valor e paginação são aplicados em memória sobre os jogadores ativos. O volume do estudo de caso (máx. 20 clubes e 12 jogadores por clube) torna isso aceitável.
+- **Validação estrita de query params:** valores vazios, zeros à esquerda, maiúsculas trocadas e campos repetidos no `sort` são recusados com 400 (`PlayerListQuery` e `QueryParams`).
+- **Valor do elenco e patrimônio:** calculados a cada consulta, nunca gravados.
+- **`GET /clubs`:** uma consulta de jogadores por clube (N+1), aceitável com no máximo 20 clubes.
+- **Unicidade do nome do clube:** checagem no service e índice `lower(nome)` no banco como garantia final.
+- **Datas nas respostas:** serializadas sempre com `-03:00` (`BrasiliaDateTimeSerializer`).
+- **Detalhe do clube:** `@JsonUnwrapped` achata o jogador e o clube no JSON, para não duplicar campos nos DTOs.
 
 
 ## Tecnologias e dependências

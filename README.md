@@ -4,6 +4,10 @@
 - **Unicidade do nome do clube:** Índice único em `lower(nome)`. Isso ignora diferenças entre letras maiúsculas e minúsculas e mantém os acentos, conforme a RN10: `"Águias FC"` e `"Aguias FC"` são considerados nomes diferentes.
 - **Índice parcial de contrato ativo:** Garante no banco de dados que um jogador não tenha dois contratos com status `ATIVO`.
 - **`ck_jogadores_valor`:** O piso de `1,00` para o valor base, definido pela RN06, fica protegido no banco de dados.
+- O valor do elenco e o patrimônio serão calculados a cada consulta, nunca gravados no banco de dados.
+- O endpoint `GET /clubs` fará uma consulta de jogadores por clube, com um limite máximo de 20 clubes.
+- A unicidade do nome será garantida por uma validação no service e por um índice `lower(nome)` no banco de dados.
+
 
 ## Tecnologias e dependências
 

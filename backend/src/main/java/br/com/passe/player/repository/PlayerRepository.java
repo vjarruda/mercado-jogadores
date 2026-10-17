@@ -13,4 +13,6 @@ public interface PlayerRepository extends JpaRepository<Player, Integer> {
     List<Player> findAllByDeletedAtIsNull();
 
     List<Player> findAllByClubIdAndDeletedAtIsNull(Integer clubId);
+
+    long countByClubIdAndDeletedAtIsNull(Integer clubId);
 }

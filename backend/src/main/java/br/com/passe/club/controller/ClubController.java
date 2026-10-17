@@ -9,10 +9,13 @@ import br.com.passe.market.dto.TransactionListResponse;
 import br.com.passe.market.service.TransactionQueryService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -49,5 +52,18 @@ public class ClubController {
         // o filtro é lido antes de consultar o clube: formato inválido (400) vem antes de inexistente (404)
         TransactionFilter filter = TransactionFilter.from(params);
         return transactionQueryService.list(id, filter);
+    }
+
+    @GetMapping("/{id}/transactions/export")
+    public ResponseEntity<String> exportTransactions(@PathVariable String id,
+                                                     @RequestParam Map<String, String> params) {
+        // formato do filtro inválido (400) vem antes de clube inexistente (404)
+        TransactionFilter filter = TransactionFilter.from(params);
+        String csv = transactionQueryService.exportCsv(id, filter);
+
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"transacoes-clube-" + id + ".csv\"")
+                .body(csv);
     }
 }

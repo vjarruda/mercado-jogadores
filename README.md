@@ -1,16 +1,51 @@
 ## Decisões e premissas
 
+### Banco de dados
+
 - **`TIMESTAMP` sem fuso:** Segui o enunciado. Como o `application.yml` fixa `America/Sao_Paulo` no Hibernate e no Jackson, tudo é gravado e lido no horário de Brasília.
-- **Unicidade do nome do clube:** Índice único em `lower(nome)`. Isso ignora diferenças entre letras maiúsculas e minúsculas e mantém os acentos, conforme a RN10: `"Águias FC"` e `"Aguias FC"` são considerados nomes diferentes.
-- **Índice parcial de contrato ativo:** Garante no banco de dados que um jogador não tenha dois contratos com status `ATIVO`.
-- **`ck_jogadores_valor`:** O piso de `1,00` para o valor base, definido pela RN06, fica protegido no banco de dados.
-- **Listagem de jogadores em memória:** o valor de mercado é calculado a cada consulta e não é gravado, então filtros por valor, ordenação por valor e paginação são aplicados em memória sobre os jogadores ativos. O volume do estudo de caso (máx. 20 clubes e 12 jogadores por clube) torna isso aceitável.
-- **Validação estrita de query params:** valores vazios, zeros à esquerda, maiúsculas trocadas e campos repetidos no `sort` são recusados com 400 (`PlayerListQuery` e `QueryParams`).
-- **Valor do elenco e patrimônio:** calculados a cada consulta, nunca gravados.
-- **`GET /clubs`:** uma consulta de jogadores por clube (N+1), aceitável com no máximo 20 clubes.
-- **Unicidade do nome do clube:** checagem no service e índice `lower(nome)` no banco como garantia final.
-- **Datas nas respostas:** serializadas sempre com `-03:00` (`BrasiliaDateTimeSerializer`).
+- **Unicidade do nome do clube (RN10):** Checagem no service (`existsByNameIgnoreCase`) e índice único em `lower(nome)` no banco como garantia final. Isso ignora diferenças entre maiúsculas e minúsculas e mantém os acentos: `"Águias FC"` e `"Aguias FC"` são nomes diferentes.
+- **Índice parcial de contrato ativo:** Garante no banco que um jogador não tenha dois contratos com status `ATIVO`.
+- **`ck_jogadores_valor`:** O piso de `1,00` para o valor base, definido pela RN06, fica protegido no banco.
+
+### Jogadores e clubes
+
+- **Listagem de jogadores em memória:** O valor de mercado é calculado a cada consulta e não é gravado, então filtros por valor, ordenação por valor e paginação são aplicados em memória sobre os jogadores ativos. O volume do estudo de caso (máx. 20 clubes e 12 jogadores por clube) torna isso aceitável.
+- **Validação estrita de query params:** Valores vazios, zeros à esquerda, maiúsculas trocadas e campos repetidos no `sort` são recusados com 400 (`PlayerListQuery` e `QueryParams`).
+- **Valor do elenco e patrimônio:** Calculados a cada consulta, nunca gravados.
+- **`GET /clubs`:** Uma consulta de jogadores por clube (N+1), aceitável com no máximo 20 clubes.
 - **Detalhe do clube:** `@JsonUnwrapped` achata o jogador e o clube no JSON, para não duplicar campos nos DTOs.
+
+### Datas
+
+- **Datas nas respostas:** Serializadas sempre com segundos e `-03:00` (`BrasiliaDateTimeSerializer`).
+- **Datas no corpo das requisições:** Recebidas como texto e validadas de forma estrita por `BrasiliaDateTimeParser` (formato `AAAA-MM-DDTHH:MM-03:00`, sem segundos). Datas inexistentes (`2027-02-30`, `24:00`) são recusadas com 400. O parser fica separado do serializer porque o formato de entrada e o de saída são diferentes, e a mensagem de erro indica o campo.
+
+### Mercado (compra e venda)
+
+- **Operações atômicas:** Compra e venda rodam em uma única transação (`@Transactional`): caixa, elenco, contrato e transação do histórico mudam juntos ou nada muda. Toda recusa deixa o banco intacto.
+- **Preço sempre recalculado:** O valor pago na compra e o valor recebido na venda são o valor de mercado do momento, recalculado na hora, nunca o valor base.
+- **Ordem das validações da compra:** Corpo e data inválidos (400), depois jogador e clube inexistentes (404) e por fim as regras de negócio (409). Assim nunca se combinam dois erros no mesmo pedido.
+- **Limite de 50% do caixa:** Comparado como `custo × 2 ≤ caixa`, sem divisão nem arredondamento. Custo exatamente igual ao limite é aceito.
+- **Fim da fidelidade:** Precisa ser posterior ao momento da compra e no máximo 1.095 dias depois dele.
+- **Recompra:** Um clube não compra jogador que ele mesmo já vendeu, verificado pelas transações `VENDA` do histórico. Outros clubes podem comprá-lo.
+- **Contrato ao vender:** Vira `RESCINDIDO` quando há multa (dias restantes maiores que zero) e `ENCERRADO` quando a fidelidade já foi cumprida.
+- **Cálculos isolados:** Dias restantes e percentual de multa ficam em `LoyaltyRules`; multa e comissão ficam em `SaleCalculator`. Nenhum acessa o banco, o que facilita testá-los.
+- **Jogador com clube sem contrato ativo:** Só ocorre se o banco for alterado manualmente. Nesse caso a venda falha com 500 e a transação é desfeita.
+
+### Histórico de transações
+
+- **Filtro e ordenação em memória:** O histórico filtra por tipo e jogador e ordena (mais recente primeiro, empate por id decrescente) em memória.
+- **Validação antes da consulta:** O formato dos filtros (400) é validado antes de consultar clube e jogador (404).
+- **Valores gravados:** Cada transação guarda os valores e o nome do jogador do momento e nunca é recalculada.
+- **`summary`:** Calculado a cada consulta sobre as transações já filtradas, arredondado para 2 casas.
+- **Jogador excluído:** Suas transações antigas continuam no histórico. Filtrar por ele devolve 404.
+
+### Exportação CSV
+
+- **Mesmo resultado do JSON:** A exportação reaproveita `TransactionQueryService.filtered`, então filtros, validações e ordem são idênticos aos do histórico.
+- **Sem biblioteca externa:** O CSV é gerado com `StringBuilder`, escapando `;` e `"` nos nomes conforme a RN18.
+- **Formato:** UTF-8 sem BOM, `\n` ao fim de todas as linhas (inclusive a última), vírgula decimal com 2 casas e `lucro` vazio quando nulo.
+- **Sem `produces` no endpoint:** O `Content-Type` é definido na resposta de sucesso, para que erros (400 e 404) continuem saindo em JSON, mesmo que o cliente envie `Accept: application/json`.
 
 
 ## Tecnologias e dependências

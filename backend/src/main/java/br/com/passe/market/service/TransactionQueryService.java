@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TransactionQueryService {
 
+    private final TransactionCsvExporter csvExporter;
+
     //da mais recente para a mais antiga; no empate, id decrescente
     private static final Comparator<MarketTransaction> NEWEST_FIRST = Comparator
             .comparing(MarketTransaction::getCreatedAt)
@@ -47,5 +49,10 @@ public class TransactionQueryService {
                 .filter(filter::matches)
                 .sorted(NEWEST_FIRST)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public String exportCsv(String rawClubId, TransactionFilter filter) {
+        return csvExporter.export(filtered(rawClubId, filter));
     }
 }

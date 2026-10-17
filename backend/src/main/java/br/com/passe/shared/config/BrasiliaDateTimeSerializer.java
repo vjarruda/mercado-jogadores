@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 
 public class BrasiliaDateTimeSerializer extends JsonSerializer<LocalDateTime> {
 
-    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'-03:00'");
+    public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'-03:00'");
 
     @Override
     public void serialize(LocalDateTime value, JsonGenerator generator, SerializerProvider provider)
